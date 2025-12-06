@@ -1,0 +1,46 @@
+---
+- name: Check UFW status
+  ansible.builtin.command: ufw status
+  register: ufw_status
+  changed_when: false
+
+- name: Show UFW status (debug)
+  ansible.builtin.debug:
+    var: ufw_status.stdout_lines
+
+- name: Assert UFW is active
+  ansible.builtin.assert:
+    that:
+      - "'Status: active' in ufw_status.stdout"
+    fail_msg: "UFW is NOT enabled!"
+    success_msg: "UFW is enabled and running."
+
+- name: Get current UFW rules
+  ansible.builtin.command: ufw status verbose
+  register: ufw_verbose
+  changed_when: false
+
+- name: Assert UFW allows SSH
+  ansible.builtin.assert:
+    that:
+      - "'22/tcp' in ufw_verbose.stdout"
+    fail_msg: "SSH (port 22) is NOT allowed in UFW!"
+    success_msg: "SSH (port 22) is allowed in UFW."
+
+- name: Assert UFW allows HTTP
+  ansible.builtin.assert:
+    that:
+      - "'80/tcp' in ufw_verbose.stdout"
+    fail_msg: "HTTP (port 80) is NOT allowed in UFW!"
+    success_msg: "HTTP (port 80) is allowed in UFW."
+
+- name: Assert UFW default policy is deny incoming
+  ansible.builtin.assert:
+    that:
+      - "'Default: deny (incoming)' in ufw_verbose.stdout"
+    fail_msg: "Default incoming policy is NOT deny!"
+    success_msg: "Default incoming policy is deny."
+
+- name: Test Complete
+  ansible.builtin.debug:
+    msg: "common/main.yml test complete and PASSED."
